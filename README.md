@@ -13,8 +13,6 @@ Currently supported devices are:
 - [ADSI16475-2](https://www.analog.com/jp/products/adis16475.html)
   - Precision, Miniature MEMs IMU
   
-The default is dedicated to ADIS16495-2, so the firmware needs to be updated if another sensor is used.
-
 Support for other sensors is possible by adding a library of sensors.
 
 # SPI Mode
@@ -30,7 +28,7 @@ When using this mode, it is recommended to operate with [IMU_PlatformTool](https
 There are two types of firmware updates.
 
   - Write from USB(DFU)
-    - When the 8th CONF switch is turned on and the power is turned on, the DFU mode is entered.
+    - When the 6th CONF switch is turned on and the power is turned on, the DFU mode is entered.
     - DFU can write firmware from [STM32CubeProg](https://www.st.com/en/development-tools/stm32cubeprog.html).
     - Download the sensor firmware [here](https://github.com/technoroad/TR-IMU1647X/releases). 
   - Write or debug with ST-LINK
