@@ -438,7 +438,7 @@ static bool SET_SEND_CYCLE_func(){
 	if(!IsDecString(words[1]))return false;
 
 	u16 cycle = DecStringToDec(words[1]);
-	u16 min_cycle = (u16)(Get_CtrlCycle()*1000.0);
+    u16 min_cycle = Get_MIN_SEND_CYCLE();
 
 	cycle =cycle - cycle%min_cycle;
 
@@ -446,8 +446,14 @@ static bool SET_SEND_CYCLE_func(){
 		return false;
 	}
 
+    bool pflg= IsSendEnable();
+
 	Params.send_cycle_ms = cycle;
 	Set_SendCycle((double)Params.send_cycle_ms/1000.0);
+
+    if(pflg){
+        SendStart();
+    }
 
 	char buf[128];
 	memset(buf,0,sizeof(buf));

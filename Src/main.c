@@ -100,6 +100,8 @@ static void MX_TIM7_Init(void);
 void IMU_BRD_SETTING(double c_cycle,double s_cycle);
 void Start_PoseUpdateTimer();
 void Read_FlashData();
+void ReadyPin_Disable(void);
+void ReadyPin_Enable(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -111,31 +113,43 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   {
       // Bias automatic updating is not to work the IMU
       if(!IsAutoBiasUpdate()){
-          // For processing time confirmation
-          DEBUG_PIN_HIGH;
-
-          // Reset attitude angle if user switch is pressed
-          if(READ_USER_SW){
-              LD2_ON;
-              HAL_Delay(500);
-              mkAE_Reset_Filter();
-              LD2_OFF;
-          }else{
-              // Update attitude angles.
-              pose_update_func();
-          }
-
-          // For processing time confirmation
-          DEBUG_PIN_LOW;
+          print_func();
       }
   }
 
-  if (htim == &htim7)
-  {
-      AutoBiasUpdate_TIM();
-  }
+	if (htim == &htim7)
+	{
+		if(AutoBiasUpdate_TIM()){
+			// EXTI Interrupt enable
+			ReadyPin_Enable();
+		}
+	}
 }
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if ( GPIO_Pin == GPIO_PIN_7 ){
+		// Bias automatic updating is not to work the IMU
+		if(!IsAutoBiasUpdate()){
+			// For processing time confirmation
+			DEBUG_PIN_HIGH;
+
+			// Reset attitude angle if user switch is pressed
+			if(READ_USER_SW){
+				LD2_ON;
+				HAL_Delay(500);
+				mkAE_Reset_Filter();
+				LD2_OFF;
+			}else{
+				// Update attitude angles.
+				pose_update_func();
+			}
+
+			// For processing time confirmation
+			DEBUG_PIN_LOW;
+		}
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -174,15 +188,21 @@ int main(void)
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
 
+  // EXTI Interrupt disable
+  ReadyPin_Disable();
+
   // Read parameters from FLASH memory.
   Read_FlashData();
 
+  // Get control period from Ready pin frequency
+  double ctrl_cycle = 1.0/ADIS_GetRDY_Freq();
+
   // Initialize the sensor,
   //select the operation mode, and set the UART.
-  IMU_BRD_SETTING(CONTROL_CYCLE,(double)Params.send_cycle_ms/1000.0);
+  IMU_BRD_SETTING(ctrl_cycle,(double)Params.send_cycle_ms/1000.0);
 
   // Filter initialization
-  mkAE_Filter_Init(CONTROL_CYCLE);
+  mkAE_Filter_Init(ctrl_cycle);
 
   // Start PoseUpdateTimer
   Start_PoseUpdateTimer();
@@ -201,7 +221,6 @@ int main(void)
 
 			default:			// Attitude angle mode etc
 			  ReadStringCmd();
-			  print_func();
 			  break;
 		}
     /* USER CODE END WHILE */
@@ -278,7 +297,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
   hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -442,14 +461,24 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ADIS_DR_Pin ADIS_SYNC_Pin */
-  GPIO_InitStruct.Pin = ADIS_DR_Pin|ADIS_SYNC_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pin : PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : ADIS_SYNC_Pin */
+  GPIO_InitStruct.Pin = ADIS_SYNC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(ADIS_SYNC_GPIO_Port, &GPIO_InitStruct);
+
   /**/
   HAL_I2CEx_EnableFastModePlus(SYSCFG_CFGR1_I2C_FMP_PB6);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
 }
 
@@ -470,8 +499,10 @@ void Start_PoseUpdateTimer(){
 		case USB_SPI_MODE:		// ADI_DRIVER mode
 			break;
 		default:				// attitude angle mode etc
-            __HAL_TIM_CLEAR_IT(&htim6, TIM_IT_UPDATE);
-			HAL_TIM_Base_Start_IT(&htim6);
+            if(!IsAutoBiasUpdate()){
+                // EXTI Interrupt enable
+                ReadyPin_Enable();
+            }
 			break;
 	}
 }
@@ -488,6 +519,15 @@ void Read_FlashData(){
 	  writeFlash(DATA_ADDR,(uint16_t*)&Params,sizeof(FLASH_ROM_Parameters));
 	}
 }
+
+void ReadyPin_Disable(void){
+    HAL_NVIC_DisableIRQ(EXTI4_15_IRQn);
+}
+
+void ReadyPin_Enable(void){
+    HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+}
+
 /* USER CODE END 4 */
 
 /**

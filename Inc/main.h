@@ -109,8 +109,6 @@ void Error_Handler(void);
 #define SPI1_MO_GPIO_Port GPIOB
 #define SPI1_nCS_Pin GPIO_PIN_6
 #define SPI1_nCS_GPIO_Port GPIOB
-#define ADIS_DR_Pin GPIO_PIN_7
-#define ADIS_DR_GPIO_Port GPIOB
 #define ADIS_SYNC_Pin GPIO_PIN_8
 #define ADIS_SYNC_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
@@ -146,9 +144,6 @@ void Error_Handler(void);
 
 //#define BoardName "TR-IMU-Platform"
 #define BoardName "TR-IMU1647X"
-
-// Please Change this value when changing the TIM3 cycle.
-#define CONTROL_CYCLE 0.01 	//[s]
 
 // Address to start writing data to flash memory
 #define DATA_ADDR 0x0801F800
