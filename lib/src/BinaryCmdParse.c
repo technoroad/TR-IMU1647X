@@ -118,7 +118,7 @@ void BinaryCmdParse(char* cmd,u32 len){
 	}
 
 	// For processing time confirmation
-	DEBUG_PIN_LOW;
+//	DEBUG_PIN_LOW;
 }
 
 #define TIME_CNT_LIM 0x200
@@ -131,7 +131,7 @@ void ReadBinaryCmd(){
 		// UART processing
 		if(U_get_cap()!=0){		//Evaluate the number of characters received
 			// For processing time confirmation
-			DEBUG_PIN_HIGH;
+//			DEBUG_PIN_HIGH;
 
 			// Store received characters in buffer
 			LD1_ON;
@@ -160,7 +160,7 @@ void ReadBinaryCmd(){
 		//USB processing
 		if(USB_get_cap()!=0){
 			// For processing time confirmation
-			DEBUG_PIN_HIGH;
+//			DEBUG_PIN_HIGH;
 
 			// Store received packets in command buffer
 			u8 pl =USB_get_pl_ring_buf();

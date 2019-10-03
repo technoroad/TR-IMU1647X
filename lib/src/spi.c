@@ -30,12 +30,12 @@ extern SPI_HandleTypeDef hspi1;
 #define TIMEOUT 20
 
 void SPI_enable_nss(){
-	DEBUG_PIN_HIGH;
+//	DEBUG_PIN_HIGH;
 	HAL_GPIO_WritePin(SPI1_nCS_GPIO_Port,SPI1_nCS_Pin,GPIO_PIN_RESET);
 }
 
 void SPI_disable_nss(){
-	DEBUG_PIN_LOW;
+//	DEBUG_PIN_LOW;
 	HAL_GPIO_WritePin(SPI1_nCS_GPIO_Port,SPI1_nCS_Pin,GPIO_PIN_SET);
 }
 
