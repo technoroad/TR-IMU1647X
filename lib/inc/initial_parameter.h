@@ -37,6 +37,8 @@ THE SOFTWARE.
 #define startup_time_s_init 120;        // 120[s]
 #elif defined(ADIS16475)
 #define startup_time_s_init 120;        // 120[s]
+#elif defined(ADIS16477)
+#define startup_time_s_init 120;        // 120[s]
 #endif
 
 #define CSUM_SIZE 2

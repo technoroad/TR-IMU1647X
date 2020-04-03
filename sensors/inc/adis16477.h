@@ -22,16 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
-#ifndef INC_ADIS16475_H_
-#define INC_ADIS16475_H_
+#ifndef INC_ADIS16477_H_
+#define INC_ADIS16477_H_
 
 #include "def.h"
 #include "select_sensor.h"
 
-# if defined(ADIS16475)
+# if defined(ADIS16477)
 
-#define PRODUCT_ID 0x405B
+#define PRODUCT_ID 0x405D
 
 #define FLASH_CNT   	0x00  //Flash memory write count
 #define DIAG_STAT   	0x02  //Diagnostic and operational status
@@ -120,4 +119,4 @@ void ADIS_Get_SensSensi(double *GyroSensi,double *AccSensi);
 
 #endif
 
-#endif /* INC_ADIS16475_H_ */
+#endif /* INC_ADIS16477_H_ */

@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 
 #include "select_sensor.h"
-# if defined(ADIS16470)
+# if defined(ADIS16477)
 
 #include <libraries.h>
 #include "math.h"
@@ -34,10 +34,18 @@ static vu32 gyro_hex[3],acc_hex[3];
 static double gyro_raw[3],acc_raw[3];
 
 // Delay per data of SPI communication [us]
-static u32 tSTALL =17;
+static u32 tSTALL =16;
 
-static double GyroSensitivity = 655360.0;
-static double AcclSensitivity = 52428800.0;
+#if defined(_1BMLZ)
+	static double GyroSensitivity = 10485760.0;
+	static double AcclSensitivity = 52428800.0;
+#elif defined(_2BMLZ)
+	static double GyroSensitivity = 2621440.0;
+	static double AcclSensitivity = 52428800.0;
+#elif defined(_3BMLZ)
+	static double GyroSensitivity = 655360.0;
+	static double AcclSensitivity = 52428800.0;
+#endif
 
 // IMU initialization
 void ADIS_INIT(void){
@@ -70,7 +78,7 @@ void ADIS_INIT(void){
 		}
 	}
 
-	//Hard filter setting in sensor
+	// Hard filter setting in sensor
 	ADIS_HardwareFilterSelect(1);
 }
 
@@ -97,7 +105,6 @@ void ADIS_WRITE_REG(u16 addr,u16 value){
 
 // Read any address value
 u16 ADIS_READ_REG(u16 addr){
-
 	// Burst command can not be read
 	if(addr == BURST_CMD)return false;
 
@@ -126,7 +133,7 @@ u16 ADIS_PAGE_DUMP(u16 * vals){
 //Hard filter selection.
 //See the data sheet for details.
 bool ADIS_HardwareFilterSelect(int dat) {
-	ADIS_RegWrite_16bit(FILT_CTRL, dat);
+	ADIS_RegWrite_16bit(FILT_CTRL, dat); // Set digital filter
 	return true;
 }
 
