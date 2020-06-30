@@ -52,23 +52,24 @@ static void other_func();
 static bool LOAD_INIT_func();
 static bool SAVE_PARAM_func();
 static bool DUMP_PARAM_func();
-static bool GET_VERSION_func();
 static bool SET_SEND_CYCLE_func();
+static bool GET_VERSION_func();
 static bool GET_PROD_ID_func();
 static bool GET_FORMAT_func();
 static bool GET_SENSI_func();
 static bool GET_BOARD_NAME_func();
 static bool GET_STATUS_func();
 static bool SET_STARTUP_TIME_func();
+static bool SET_FORMAT_func();
 
 //Command parse processing
 void StringCmdParse( char c){
-	CMD_PARSE_FLAG =true;
-
 	if (c == '\r'){
 		//ignore '\r'
 		return;
 	}
+
+	CMD_PARSE_FLAG =true;
 
 	if(c != '\n'){
 		CmdBuf[CmdBuf_wp++] = c;
@@ -165,7 +166,7 @@ void StringCmdParse( char c){
 			}
 		}else if(strcmp(words[0] ,"GET_BOARD_NAME") ==0){
 			if(!GET_BOARD_NAME_func()){
-				U_puts("ERROR_GET_BOARD_NAMEI\r\n");
+				U_puts("ERROR_GET_BOARD_NAME\r\n");
 			}
 		}else if(strcmp(words[0] ,"GET_STATUS") ==0){
 			if(!GET_STATUS_func()){
@@ -174,6 +175,10 @@ void StringCmdParse( char c){
 		}else if(strcmp(words[0] ,"SET_STARTUP_TIME") ==0){
 			if(!SET_STARTUP_TIME_func()){
 				U_puts("ERROR_STARTUP_TIME\r\n");
+			}
+		}else if(strcmp(words[0] ,"SET_FORMAT") ==0){
+			if(!SET_FORMAT_func()){
+				U_puts("ERROR_SET_FORMAT\r\n");
 			}
 		}else if(strcmp(words[0] ,"start") ==0){
 			SendStart();
@@ -220,7 +225,7 @@ bool WRITE_REG_func(){
 	u16 addr =HexStringToU16(words[2]);
 	u16 value=HexStringToU16(words[3]);
 
-#if defined(ADIS16495)
+#if defined(ADIS1649X)
 	ADIS_WRITE_REG(page,addr,value);
 #else
 	ADIS_WRITE_REG(addr,value);
@@ -247,7 +252,7 @@ bool READ_REG_func(){
 	u16 page =HexStringToU16(words[1]);
 	u16 addr =HexStringToU16(words[2]);
 
-#if defined(ADIS16495)
+#if defined(ADIS1649X)
 	// Can not read page 0 register 0x7C
 	if(page ==PAGE_ID && addr == PAGE0_BURST_CMD)return false;
 	u16 value =ADIS_READ_REG(page,addr);
@@ -277,7 +282,7 @@ bool PAGE_DUMP_func(){
 
 	u16 vals[64];
 	memset(vals,0,sizeof(vals));
-#if defined(ADIS16495)
+#if defined(ADIS1649X)
 	u16 page_len =ADIS_PAGE_DUMP(page,vals);
 #else
 	u16 page_len =ADIS_PAGE_DUMP(vals);
@@ -310,7 +315,7 @@ bool HARD_FILTER_SELECT_func(){
 		array[i] =atoi(words[i+1]);
 	}
 
-#if !defined(ADIS1647X)
+#if defined(ADIS1649X)
 	ADIS_HardwareFilterSelect(
 			array[0],array[1],array[2],array[3],array[4],array[5]);
 #else
@@ -339,7 +344,7 @@ bool READ_TEMP_func(){
 	memset(buf,0,sizeof(buf));
 
 	str_concat(buf,"READ_TEMP,");
-    str_concat(buf,str_putlf(Get_Temp(),5));
+	str_concat(buf,str_putlf(Get_Temp(),5));
 	str_concat(buf,"\r\n");
 	U_puts(buf);
 
@@ -414,8 +419,10 @@ static bool DUMP_PARAM_func(){
 	str_concat(buf,str_putx(Params.version ,8));str_concat(buf,",");
 	str_concat(buf,str_putlf(Params.gain_p ,5));str_concat(buf,",");
 	str_concat(buf,str_putlf(Params.gain_i ,5));str_concat(buf,",");
-    str_concat(buf,str_putn2(Params.send_cycle_ms));str_concat(buf,",");
-    str_concat(buf,str_putn2(Params.startup_time_s));str_concat(buf,"\r\n");
+	str_concat(buf,str_putn2(Params.send_cycle_ms));str_concat(buf,",");
+	str_concat(buf,str_putn2(Params.startup_time_s));
+
+	str_concat(buf,"\r\n");
 	U_puts(buf);
 
 	return true;
@@ -453,7 +460,7 @@ static bool SET_SEND_CYCLE_func(){
 	memset(buf,0,sizeof(buf));
 
 	str_concat(buf,"SET_SEND_CYCLE,");
-    str_concat(buf,str_putn2(Params.send_cycle_ms));
+	str_concat(buf,str_putn2(Params.send_cycle_ms));
 	str_concat(buf,"\r\n");
 	U_puts(buf);
 
@@ -502,13 +509,13 @@ static bool GET_FORMAT_func(){
 				"X_ACC_HEX,Y_ACC_HEX,Z_ACC_HEX,CSUM");
 		break;
 	case GYRO_ACC_BinaryData:
-		return false;
+		str_concat(buf,"Binary");
 		break;
 	case YawPitchRoll_ACC:
 		str_concat(buf,"YAW[deg],PITCH[deg],ROLL[deg],X_ACC[g],Y_ACC[g],Z_ACC[g]");
 		break;
-    case GYRO_ACC_TEMP:
-        str_concat(buf,"X_GYRO[rad/s],Y_GYRO[rad/s],Z_GYRO[rad/s],X_ACC[g],Y_ACC[g],Z_ACC[g],TEMP[deg]");
+	case GYRO_ACC_TEMP:
+		str_concat(buf,"X_GYRO[rad/s],Y_GYRO[rad/s],Z_GYRO[rad/s],X_ACC[g],Y_ACC[g],Z_ACC[g],TEMP[deg]");
 		break;
 	default:
 		return false;
@@ -537,53 +544,96 @@ static bool GET_SENSI_func(){
 }
 
 static bool GET_BOARD_NAME_func(){
-    char buf[128];
-    memset(buf,0,sizeof(buf));
+	char buf[128];
+	memset(buf,0,sizeof(buf));
 
-    str_concat(buf,"GET_BOARD_NAME,");
-    str_concat(buf,BoardName);str_concat(buf,"\r\n");
-    U_puts(buf);
+	str_concat(buf,"GET_BOARD_NAME,");
+	str_concat(buf,BoardName);str_concat(buf,"\r\n");
+	U_puts(buf);
 
-    return true;
+	return true;
 }
 
 static bool GET_STATUS_func(){
-    char buf[128];
-    memset(buf,0,sizeof(buf));
+	char buf[128];
+	memset(buf,0,sizeof(buf));
 
-    str_concat(buf,"GET_STATUS,");
+	str_concat(buf,"GET_STATUS,");
 
-    if(IsAutoBiasUpdate()){
-        str_concat(buf,"AutoBiasUpdating,");
-        str_concat(buf,str_putn2(AutoBiasUpdate_TimeLeft()));
-    }else{
-        if(IsSendEnable()){
-            str_concat(buf,"Running");
-        }else{
-            str_concat(buf,"Ready");
-        }
-    }
+	if(IsAutoBiasUpdate()){
+		str_concat(buf,"AutoBiasUpdating,");
+		str_concat(buf,str_putn2(AutoBiasUpdate_TimeLeft()));
+	}else{
+		if(IsSendEnable()){
+			str_concat(buf,"Running");
+		}else{
+			str_concat(buf,"Ready");
+		}
+	}
 
-    str_concat(buf,"\r\n");
-    U_puts(buf);
+	str_concat(buf,"\r\n");
+	U_puts(buf);
 
-    return true;
+	return true;
 }
 
 static bool SET_STARTUP_TIME_func(){
-    char buf[128];
-    memset(buf,0,sizeof(buf));
+	char buf[128];
+	memset(buf,0,sizeof(buf));
 
-    if(!IsDecString(words[1]))return false;
+	if(!IsDecString(words[1]))return false;
 
-    u16 startup_time = DecStringToDec(words[1]);
-    Params.startup_time_s = startup_time;
+	u16 startup_time = DecStringToDec(words[1]);
+	Params.startup_time_s = startup_time;
 
-    str_concat(buf,"SET_STARTUP_TIME,");
-    str_concat(buf,str_putn2(Params.startup_time_s));str_concat(buf,"\r\n");
-    U_puts(buf);
+	str_concat(buf,"SET_STARTUP_TIME,");
+	str_concat(buf,str_putn2(Params.startup_time_s));str_concat(buf,"\r\n");
+	U_puts(buf);
 
-    return true;
+	return true;
+}
+
+bool SET_FORMAT_func(){
+	char buf[128];
+	memset(buf,0,sizeof(buf));
+
+	if(!IsDecString(words[1]))return false;
+
+	u8 format = DecStringToDec(words[1]);
+
+	str_concat(buf,"SET_FORMAT,");
+
+	switch(format){
+	case YawPitchRoll:
+		str_concat(buf,"YAW[deg],PITCH[deg],ROLL[deg]");
+		break;
+	case GYRO_Degree:
+		str_concat(buf,"X_GYRO[deg/s],Y_GYRO[deg/s],Z_GYRO[deg/s]");
+		break;
+	case GYRO_ACC_HexData:
+		str_concat(buf,"X_GYRO_HEX,Y_GYRO_HEX,Z_GYRO_HEX,"
+				"X_ACC_HEX,Y_ACC_HEX,Z_ACC_HEX,CSUM");
+		break;
+	case GYRO_ACC_BinaryData:
+		str_concat(buf,"Binary");
+		break;
+	case YawPitchRoll_ACC:
+		str_concat(buf,"YAW[deg],PITCH[deg],ROLL[deg],X_ACC[g],Y_ACC[g],Z_ACC[g]");
+		break;
+	case GYRO_ACC_TEMP:
+		str_concat(buf,"X_GYRO[rad/s],Y_GYRO[rad/s],Z_GYRO[rad/s],X_ACC[g],Y_ACC[g],Z_ACC[g],TEMP[deg]");
+		break;
+	default:
+		return false;
+		break;
+	}
+
+	str_concat(buf,"\r\n");
+	U_puts(buf);
+
+	Set_Format(format);
+
+	return true;
 }
 
 void other_func(){
@@ -601,7 +651,7 @@ void Params_initialize(){
 	Params.gain_p = gain_p_init ;
 	Params.gain_i = gain_i_init ;
 	Params.send_cycle_ms =send_cycle_ms_init;
-    Params.startup_time_s = startup_time_s_init;
+	Params.startup_time_s = startup_time_s_init;
 	Params.csum = CSUM_calc((uint8_t*)&Params,sizeof(FLASH_ROM_Parameters)-CSUM_SIZE);
 
 	Set_SendCycle((double)Params.send_cycle_ms/1000.0);
