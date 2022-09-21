@@ -69,8 +69,6 @@
 /*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     512
 /*---------- -----------*/
-#define USBD_SUPPORT_USER_STRING     0
-/*---------- -----------*/
 #define USBD_DEBUG_LEVEL     0
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1
@@ -171,5 +169,3 @@ void USBD_static_free(void *p);
 #endif
 
 #endif /* __USBD_CONF__H__ */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

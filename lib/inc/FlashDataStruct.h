@@ -32,6 +32,6 @@ typedef struct{
 	u32 send_cycle_ms;
     u32 startup_time_s;
 	u16 csum;
-}__attribute__((packed)) FLASH_ROM_Parameters;
+}__attribute__((__aligned__(2))) __attribute__((packed)) FLASH_ROM_Parameters;
 
 #endif /* FLASHDATASTRUCT_H_ */

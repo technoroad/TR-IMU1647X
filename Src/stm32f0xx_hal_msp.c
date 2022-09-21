@@ -93,12 +93,12 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
   /* USER CODE END SPI1_MspInit 0 */
     /* Peripheral clock enable */
     __HAL_RCC_SPI1_CLK_ENABLE();
-  
+
     __HAL_RCC_GPIOB_CLK_ENABLE();
-    /**SPI1 GPIO Configuration    
+    /**SPI1 GPIO Configuration
     PB3     ------> SPI1_SCK
     PB4     ------> SPI1_MISO
-    PB5     ------> SPI1_MOSI 
+    PB5     ------> SPI1_MOSI
     */
     GPIO_InitStruct.Pin = GPIO_PIN_3|SPI1_MI_Pin|SPI1_MO_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -129,11 +129,11 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
   /* USER CODE END SPI1_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_SPI1_CLK_DISABLE();
-  
-    /**SPI1 GPIO Configuration    
+
+    /**SPI1 GPIO Configuration
     PB3     ------> SPI1_SCK
     PB4     ------> SPI1_MISO
-    PB5     ------> SPI1_MOSI 
+    PB5     ------> SPI1_MOSI
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_3|SPI1_MI_Pin|SPI1_MO_Pin);
 
@@ -238,11 +238,11 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
   /* USER CODE END USART3_MspInit 0 */
     /* Peripheral clock enable */
     __HAL_RCC_USART3_CLK_ENABLE();
-  
+
     __HAL_RCC_GPIOB_CLK_ENABLE();
-    /**USART3 GPIO Configuration    
+    /**USART3 GPIO Configuration
     PB10     ------> USART3_TX
-    PB11     ------> USART3_RX 
+    PB11     ------> USART3_RX
     */
     GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -276,10 +276,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
   /* USER CODE END USART3_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_USART3_CLK_DISABLE();
-  
-    /**USART3 GPIO Configuration    
+
+    /**USART3 GPIO Configuration
     PB10     ------> USART3_TX
-    PB11     ------> USART3_RX 
+    PB11     ------> USART3_RX
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_10|GPIO_PIN_11);
 
@@ -295,5 +295,3 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
